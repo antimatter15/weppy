@@ -232,11 +232,12 @@ var WebM = (function(){
         var src = toDataURL(toWebM(webP));
 
         video.addEventListener('progress', function(){
-          context.drawImage(video, 0, 0, webP.width, webP.height);
-          callback(canvas.toDataURL('image/png'));
+          setTimeout(function(){
+            context.drawImage(video, 0, 0, webP.width, webP.height);
+            callback(canvas.toDataURL('image/png'));
           
-          setTimeout(function(){document.body.removeChild(video)}, 100);
-          
+            setTimeout(function(){document.body.removeChild(video)}, 100);
+          }, 100);
         }, false);
         
         video.src = src;
