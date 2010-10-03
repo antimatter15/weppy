@@ -133,7 +133,7 @@ function canPlayWebM(){
 
 
 function renderWebP(url, callback){
-  if(!canPlayWebM()) return callback('http://www.motifake.com/image/demotivational-poster/0902/urine-urine-pee-cheap-demotivational-poster-1234913145.jpg');
+  if(!canPlayWebM()) return callback('http://images.cheezburger.com/completestore/2010/10/3/4c659ebb-04d7-457e-ab7f-1efa07c0c4fa.jpg');
   var xhr = new XMLHttpRequest();
   xhr.open('GET', url, true);
   xhr.overrideMimeType('text/plain; charset=x-user-defined');
