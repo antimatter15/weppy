@@ -4,9 +4,12 @@ It should allow the rendering of WebP images in all browsers that support WebM v
 
 How does it work?
 
-WebP is actually a lightweight container for a single VP8 frame (whereas WebM is a container based off Matroska meant for video). WebM support exists already in Chrome, Firefox and Opera, so all that's needed to render it is to do a little magic to convert the RIFF encoded WebP image into a EBML/Matroska encoded single frame WebM video, loading it in a <video>, using drawImage() on a <canvas> and replacing the .webp image with the data URL extracted from the <canvas> using getDataURL().
+WebP is actually a lightweight container for a single VP8 frame (whereas WebM is a container based off Matroska meant for video). WebM support exists already in Chrome, Firefox and Opera, so all that's needed to render it is to do a little magic to convert the RIFF encoded WebP image into a EBML/Matroska encoded single frame WebM video, loading it in a <video>, using drawImage() on a <canvas> and replacing the .webp image with the data URL extracted from the <canvas> using toDataURL().
+Issues
 
-Demo Time!
+Chrome (on linux anyway) tends to crash a lot.
+Firefox throws a security exception when doing toDataURL() on a canvas after drawImage() of a video loaded from a data url. The hack being used it to replace the image node with the actual canvas instance.
+Opera doesn't work. I don't really have the time to investigate.
+What Browsers?
 
-http://antimatter15.github.com/weppy/demo.html
-
+Chrome 7.0 and Firefox 4.0 were both tested. Opera doesn't work for reasons that I'm not sure about. I would appreciate it if someone fixes it and submits a patch :)
