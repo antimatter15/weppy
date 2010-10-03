@@ -323,10 +323,13 @@ return generateEBML(EBML);
   }
 
   function renderImage(image){
-    renderWebP(image.src, function(src){
+    renderWebP(image.src, function(canvas){
       //image.src = src;
       if(image.parentNode){
-        image.parentNode.replaceChild(src, image);
+        for(var i = 0; i < image.attributes.length; i++){
+          canvas.setAttribute(image.attributes[i].name, image.attributes[i].value);
+        }
+        image.parentNode.replaceChild(canvas, image);
       }
     })
   }
