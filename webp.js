@@ -137,21 +137,29 @@ function renderWebP(url, callback){
   var xhr = new XMLHttpRequest();
   xhr.open('GET', url, true);
   xhr.overrideMimeType('text/plain; charset=x-user-defined');
+  var video = document.createElement('video');
+  var canvas = document.createElement('canvas');
+  
+  video.style.display = 'none';
+  document.body.appendChild(video); //probably dont need to do this, but chrome always crashes otherwise
+  
+  
+  var context = canvas.getContext('2d');
+      
   xhr.onreadystatechange = function(){
     if(xhr.status == 200 && xhr.readyState == 4){
       var binary = xhr.responseText.split('').map(function(e){return String.fromCharCode(e.charCodeAt(0) & 0xff)}).join('');
       var webP = parseWebP(parseRIFF(binary));
-      
+      canvas.width = webP.width;
+      canvas.height = webP.height;
       var src = toDataURL(toWebM(webP));
-      var video = document.createElement('video');
-      
+
       video.addEventListener('progress', function(){
-        var canvas = document.createElement('canvas');
-        canvas.width = webP.width;
-        canvas.height = webP.height;
-        var context = canvas.getContext('2d');
         context.drawImage(video, 0, 0, webP.width, webP.height);
-        callback(canvas.toDataURL('image/png'))
+        callback(canvas.toDataURL('image/png'));
+        
+        setTimeout(function(){document.body.removeChild(video)}, 100);
+        
       }, false);
       
       video.src = src;
