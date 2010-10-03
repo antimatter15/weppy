@@ -139,13 +139,22 @@ function renderWebP(url, callback){
   xhr.overrideMimeType('text/plain; charset=x-user-defined');
   xhr.onreadystatechange = function(){
     if(xhr.status == 200 && xhr.readyState == 4){
-      var binary = data.split('').map(function(e){return String.fromCharCode(e.charCodeAt(0) & 0xff)}).join('');
-      var src = toDataURL(toWebM(parseWebP(parseRIFF(binary))));
+      var binary = xhr.responseText.split('').map(function(e){return String.fromCharCode(e.charCodeAt(0) & 0xff)}).join('');
+      var webP = parseWebP(parseRIFF(binary));
+      
+      var src = toDataURL(toWebM(webP));
       var video = document.createElement('video');
+      
+      video.addEventListener('progress', function(){
+        var canvas = document.createElement('canvas');
+        canvas.width = webP.width;
+        canvas.height = webP.height;
+        var context = canvas.getContext('2d');
+        context.drawImage(video, 0, 0, webP.width, webP.height);
+        callback(canvas.toDataURL('image/png'))
+      }, false);
+      
       video.src = src;
-      var canvas = document.createElement('canvas');
-      canvas.drawImage(video);
-      callback(canvas.toDataURL('image/png'))
     }
   }
   xhr.send(null);
@@ -160,7 +169,7 @@ function renderImage(image){
 function processImages(){
   var origin = location.protocol+'//'+location.host;
   for(var i = document.images, l = i.length; l--;){
-    if(i[l].src.indexOf(origin) == 0 && /\.webm$/.test(i[l].src)){
+    if(i[l].src.indexOf(origin) == 0 && /\.webp$/.test(i[l].src)){
       renderImage(i[l]);
     }
   }
