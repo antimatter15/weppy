@@ -125,3 +125,45 @@ function toDataURL(webm){
 }
 
 
+//from http://diveintohtml5.org/everything.html
+function canPlayWebM(){
+  var v = document.createElement('video');
+  return !!(v.canPlayType && v.canPlayType('video/webm; codecs="vp8, vorbis"').replace(/no/, ''));
+}
+
+
+function renderWebP(url, callback){
+  if(!canPlayWebM()) return callback('http://www.motifake.com/image/demotivational-poster/0902/urine-urine-pee-cheap-demotivational-poster-1234913145.jpg');
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', url, true);
+  xhr.overrideMimeType('text/plain; charset=x-user-defined');
+  xhr.onreadystatechange = function(){
+    if(xhr.status == 200 && xhr.readyState == 4){
+      var binary = data.split('').map(function(e){return String.fromCharCode(e.charCodeAt(0) & 0xff)}).join('');
+      var src = toDataURL(toWebM(parseWebP(parseRIFF(binary))));
+      var video = document.createElement('video');
+      video.src = src;
+      var canvas = document.createElement('canvas');
+      canvas.drawImage(video);
+      callback(canvas.toDataURL('image/png'))
+    }
+  }
+  xhr.send(null);
+}
+
+function renderImage(image){
+  renderWebP(image.src, function(src){
+    image.src = src;
+  })
+}
+
+function processImages(){
+  var origin = location.protocol+'//'+location.host;
+  for(var i = document.images, l = i.length; l--;){
+    if(i[l].src.indexOf(origin) == 0 && /\.webm$/.test(i[l].src)){
+      renderImage(i[l]);
+    }
+  }
+}
+
+
