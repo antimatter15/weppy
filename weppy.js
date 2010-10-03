@@ -21,7 +21,6 @@
 */
 
 var WebM = (function(){
-
   //parse a RIFF encoded media file such as WebP
   function parseRIFF(string){
     var offset = 0;
@@ -73,7 +72,6 @@ var WebM = (function(){
     tmp = (c[3] << 8) | c[2];
     height = tmp & 0x3FFF;
     vertical_scale = tmp >> 14;
-    
     return {
       width: width,
       height: height,
@@ -84,116 +82,197 @@ var WebM = (function(){
 
 
   //this is a smaller version of http://github.com/antimatter15/js-ebml
-  //the full version requires a massive schema json document and everything
-  //is sort of array-ish. This is simpler and more associative.
-
-  //in case you're wondering why I didn't just pre-render stuff and substitute
-  //with a .replace, it's because ebml sections require a length, and it gets
-  //hard to maintain that. easier jsut to do this.
   
   function generateEBML(json){
     var ebml = '';
-    for(var i in json){
-      var data = json[i];
-      var hexid = i;
-      if(typeof data == 'object'){
-        data = generateEBML(data);
-      }else if(typeof data == 'number'){
-        data = toBinStr(data.toString(2));
-      }
+    for(var i = 0; i < json.length; i++){
+      var data = json[i].data;
 
+      if(typeof data == 'object') data = generateEBML(data);
+      
       var len = data.length;
       var zeroes = Math.ceil(Math.ceil(Math.log(len)/Math.log(2))/8);
-      //(zeroes + 1) * 8 - (zeroes + 1) = zeroes * 7 - 7 = needed size
       var size_str = len.toString(2);
       var padded = (new Array((zeroes * 7 + 7 + 1) - size_str.length)).join('0') + size_str;
-      var size = (new Array(zeroes + 1)).join('0') + '1' + padded;
-      ebml += toBinStr(parseInt(hexid, 16).toString(2));
-      ebml += toBinStr(size);
-      ebml += data;
+      var size = (new Array(zeroes)).join('0') + '1' + padded;
+      
+
+      var element = '';
+      element += toBinStr(parseInt(json[i].hex, 16).toString(2));
+      element += toBinStr(size);
+      
+      element += data;
+      ebml += element;
+      
     }
     return ebml;
   }
 
-
-  /*
-    this is the below with the hex element ids replaced with the matroska element names
-    {
-      "EBML": [
-        {
-          "EBMLVersion": 1,
-          "EBMLReadVersion": 1,
-          "EBMLMaxIDLength": 4,
-          "EBMLMaxSizeLength": 8,
-          "DocType": "webm",
-          "DocTypeVersion": 2,
-          "DocTypeReadVersion": 2
-        }
-      ],
-      "Segment": [
-        {
-          "Tracks": [
-            {
-              "TrackEntry": [
-                {
-                  "TrackNumber": 1,
-                  "TrackUID": 1,
-                  "FlagLacing": 0,
-                  "Language": "und",
-                  "CodecID": "V_VP8",
-                  "TrackType": 1,
-                  "DefaultDuration": 40000000,
-                  "Video": {
-                    "PixelWidth": "PIXEL_WIDTH",
-                    "PixelHeight": "PIXEL_HEIGHT"
-                  }
-                }
-              ]
-            }
-          ],
-          "Cluster": [
-            {
-              "Timecode": 0,
-              "SimpleBlock": [
-                "IMAGE_DATA"
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  */
   function toWebM(image){
 
-    //converted using JSON.stringify(EBML,null,'  ').replace(/\w+/g,function(b){return nameHexMap[b]||b})
-
-    var EBML = {
-      "18538067": {
-        "1654ae6b": {
-          "ae": {
-              "d7": 1,
-              "63c5": 1,
-              "9c": 0,
-              "22b59c": "und",
-              "86": "V_VP8",
-              "83": 1,
-              "23e383": 40000000,
-              "e0": {
-                "b0": image.width,
-                "ba": image.height
-              }
-            }
-          },
-          "1f43b675": {
-            "e7": 0,
-            "a3": '\x81\x00\x00\x80' + image.data.substr(4)
-          }
+var EBML = [
+  {
+    "data": [
+      {
+        "data": "\u0001",
+        "name": "EBMLVersion",
+        "hex": "4286"
+      },
+      {
+        "data": "\u0001",
+        "name": "EBMLReadVersion",
+        "hex": "42f7"
+      },
+      {
+        "data": "\u0004",
+        "name": "EBMLMaxIDLength",
+        "hex": "42f2"
+      },
+      {
+        "data": "\u0008",
+        "name": "EBMLMaxSizeLength",
+        "hex": "42f3"
+      },
+      {
+        "data": "webm",
+        "name": "DocType",
+        "hex": "4282"
+      },
+      {
+        "data": "\u0002",
+        "name": "DocTypeVersion",
+        "hex": "4287"
+      },
+      {
+        "data": "\u0002",
+        "name": "DocTypeReadVersion",
+        "hex": "4285"
       }
-    };
-    
-    //the EBML header is not present because of sorting issues, it doesn't always end up the first
-    //so the precomputed header is there. on the bottom as a string.
-    return "\x1aE\xdf\xa3\x40\x20B\x82\x40\x04webmB\x85\x81\x02B\x86\x81\x01B\x87\x81\x02B\xf7\x81\x01B\xf2\x81\x04B\xf3\x81\x08" + generateEBML(EBML);
+    ],
+    "name": "EBML",
+    "hex": "1a45dfa3"
+  },
+  {
+    "data": [
+      {
+        "data": [
+          {
+            "data": "\u000fB@",
+            "name": "TimecodeScale",
+            "hex": "2ad7b1"
+          },
+          {
+            "data": "Lavf52.79.0",
+            "name": "MuxingApp",
+            "hex": "4d80"
+          },
+          {
+            "data": "Lavf52.79.0",
+            "name": "WritingApp",
+            "hex": "5741"
+          },
+          {
+            "data": "T«h¿Y¬+ùRö\u000fö×C",
+            "name": "SegmentUID",
+            "hex": "73a4"
+          },
+          {
+            "data": "@D\u0000\u0000\u0000\u0000\u0000\u0000",
+            "name": "Duration",
+            "hex": "4489"
+          }
+        ],
+        "name": "Info",
+        "hex": "1549a966"
+      },
+      {
+        "data": [
+          {
+            "data": [
+              {
+                "data": "\u0001",
+                "name": "TrackNumber",
+                "hex": "d7"
+              },
+              {
+                "data": "\u0001",
+                "name": "TrackUID",
+                "hex": "73c5"
+              },
+              {
+                "data": "\u0000",
+                "name": "FlagLacing",
+                "hex": "9c"
+              },
+              {
+                "data": "und",
+                "name": "Language",
+                "hex": "22b59c"
+              },
+              {
+                "data": "V_VP8",
+                "name": "CodecID",
+                "hex": "86"
+              },
+              {
+                "data": "\u0001",
+                "name": "TrackType",
+                "hex": "83"
+              },
+              {
+                "data": "\u0002bZ\u0000",
+                "name": "DefaultDuration",
+                "hex": "23e383"
+              },
+              {
+                "data": [
+                  {
+                    "data": toBinStr(image.width.toString(2)),
+                    "name": "PixelWidth",
+                    "hex": "b0"
+                  },
+                  {
+                    "data": toBinStr(image.height.toString(2)),
+                    "name": "PixelHeight",
+                    "hex": "ba"
+                  }
+                ],
+                "name": "Video",
+                "hex": "e0"
+              }
+            ],
+            "name": "TrackEntry",
+            "hex": "ae"
+          }
+        ],
+        "name": "Tracks",
+        "hex": "1654ae6b"
+      },
+      {
+        "data": [
+          {
+            "data": "\u0000",
+            "name": "Timecode",
+            "hex": "e7"
+          },
+          {
+            "data": '\x81\x00\x00\x80'+image.data.substr(4),
+            "name": "SimpleBlock",
+            "hex": "a3"
+          }
+        ],
+        "name": "Cluster",
+        "hex": "1f43b675"
+      }
+    ],
+    "name": "Segment",
+    "hex": "18538067"
+  }
+];
+
+return generateEBML(EBML);
+
+
   }
 
   function toDataURL(webm){
@@ -216,37 +295,39 @@ var WebM = (function(){
     xhr.overrideMimeType('text/plain; charset=x-user-defined');
     var video = document.createElement('video');
     var canvas = document.createElement('canvas');
-    
+    document.body.appendChild(canvas);
     video.style.display = 'none';
     document.body.appendChild(video); //probably dont need to do this, but chrome always crashes otherwise
     
-    
     var context = canvas.getContext('2d');
-        
-    xhr.onreadystatechange = function(){
-      if(xhr.status == 200 && xhr.readyState == 4){
-        var binary = xhr.responseText.split('').map(function(e){return String.fromCharCode(e.charCodeAt(0) & 0xff)}).join('');
-        var webP = parseWebP(parseRIFF(binary));
-        canvas.width = webP.width;
-        canvas.height = webP.height;
-        var src = toDataURL(toWebM(webP));
 
-        video.addEventListener('progress', function(){
-          context.drawImage(video, 0, 0, webP.width, webP.height);
-          callback(canvas.toDataURL('image/png'));
-        
-          //setTimeout(function(){document.body.removeChild(video)}, 100);
-        }, false);
-        
-        video.src = src;
-      }
+    xhr.onload = function(){
+      var binary = xhr.responseText.split('').map(function(e){return String.fromCharCode(e.charCodeAt(0) & 0xff)}).join('');
+      var webP = parseWebP(parseRIFF(binary));
+      canvas.width = webP.width;
+      canvas.height = webP.height;
+
+      var src = toDataURL(toWebM(webP));
+
+      video.addEventListener('progress', function(){
+        context.drawImage(video, 0, 0, webP.width, webP.height);
+        //callback(canvas.toDataURL('image/png'));
+        //firefox throws a security exception :(
+        callback(canvas);
+        //setTimeout(function(){document.body.removeChild(video)}, 100);
+      }, false);
+      
+      video.src = src;
     }
     xhr.send(null);
   }
 
   function renderImage(image){
     renderWebP(image.src, function(src){
-      image.src = src;
+      //image.src = src;
+      if(image.parentNode){
+        image.parentNode.replaceChild(src, image);
+      }
     })
   }
 
