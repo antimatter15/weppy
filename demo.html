@@ -8,6 +8,10 @@
   <body onload="processImages()"> 
     <h1>WebP Demo</h1> 
     <img src="mandelbrot.webp" width="500">
+    <h2>Demo Code</h2>
     <script src="http://gist.github.com/608701.js"> </script>
+    <h2>How does it work?</h2>
+    WebP is actually a lightweight container for a single VP8 frame (whereas WebM is a container based off Matroska meant for video). WebM support exists already in Chrome, Firefox and Opera, so all that's needed to render it is to do a little magic to convert the RIFF encoded WebP image into a EBML/Matroska encoded single frame WebM video, loading it in a &gt;video&lt;, using <tt>drawImage()</tt> on a &gt;canvas&lt; and replacing the <tt>.webp</tt> image with the data URL extracted from the &gt;canvas&lt; using <tt>getDataURL()</tt>.
+    
   </body> 
 </html> 
