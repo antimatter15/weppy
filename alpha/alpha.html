@@ -11,22 +11,47 @@
     </style>
     <script src="../weppy.js?kill_cache0"></script>
   </head>
-  <body> 
+  <body style="background: #faece5"> 
     <h1>WebP + Alpha Channel via PNG</h1> 
     
     <img src="image.webp" data-alpha-src="alpha.png" />
     <script>
+      /*
+        WARNING! EVIL UA DETECTION FOLLAWEZ!
+        E VERY
+        V SER AGENT SNIFFER
+        I S
+        L EMONS
+
+        (spongebob)
+      */
       WebM.processImages(function(image, canvas){
         var alpha_path = image.getAttribute('data-alpha-src');
         if(!alpha_path) return;
         var alpha = document.createElement('img')
         alpha.src = alpha_path;
+        var context = canvas.getContext('2d');
         alpha.onload = function () {
-          var context = canvas.getContext('2d');
-          context.globalCompositeOperation = 'xor';
-          context.drawImage(alpha, 0, 0, canvas.width, canvas.height);
+        context.globalCompositeOperation = 'xor';
+          if(navigator.userAgent.indexOf('Firefox/4.0') == -1){
+            context.drawImage(alpha, 0, 0, canvas.width, canvas.height);
+          }
         }
       })
+      //oddly the above method does not work on firefox
+      //AFIK. can't feature detect bugs. Crappy UA detections
+      if(navigator.userAgent.indexOf('Firefox/4.0') != -1){
+        setTimeout(function(){
+          var canvas = document.getElementsByTagName('canvas')[0]
+          var alpha = document.createElement('img')
+          alpha.src = "alpha.png";
+          alpha.onload = function () {
+            var context = canvas.getContext('2d');
+            context.globalCompositeOperation = 'xor';
+            context.drawImage(alpha, 0, 0, canvas.width, canvas.height);
+          }
+        },500);
+      }
     </script>
     <br>
     JPEG: 35KB. WebP: 13KB. Alpha Mask: 7KB. PNG: 12KB. <br>
@@ -41,6 +66,9 @@
 
     <h2>Issues</h2>
     <ul>
+      <li>Firefox has a nasty weird thing that is nasty and weird. For some reason, the logical method doesn't work. Someone please fix this!</li>
+      <li>For some reason, xor'ing it the first time results in all black on firefox</li>
+      <li>Firefox seems to require the image thingy to happen by a timeout, not triggered by the loading of the image (wtf?!)</li>
       <li>Chrome (on linux anyway) tends to crash a lot.</li>
       <li>Firefox throws a security exception when doing <tt>toDataURL()</tt> on a canvas after <tt>drawImage()</tt> of a video loaded from a data url. The hack being used it to replace the image node with the actual canvas instance.</li>
       <li>Opera doesn't work. I don't really have the time to investigate.</li>
