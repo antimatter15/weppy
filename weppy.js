@@ -324,20 +324,25 @@ return generateEBML(EBML);
     xhr.send(null);
   }
 
-  function renderImage(image){
-    renderWebP(image.src, function(src){
-      //image.src = src;
-      if(image.parentNode){
-        image.parentNode.replaceChild(src, image);
+  function renderImage(image, callback){
+    renderWebP(image.src, function(canvas){
+      var result = null;
+      if(callback) result = callback(image, canvas);
+      
+      if(image.parentNode && result !== false){
+        for(var i = 0; i < image.attributes.length; i++){
+          canvas.setAttribute(image.attributes[i].name, image.attributes[i].value)
+        }
+        image.parentNode.replaceChild(canvas, image);
       }
     })
   }
 
-  function processImages(){
+  function processImages(callback){
     var origin = location.protocol+'//'+location.host;
     for(var i = document.images, l = i.length; l--;){
       if(i[l].src.indexOf(origin) == 0 && /\.webp$/.test(i[l].src)){
-        renderImage(i[l]);
+        renderImage(i[l],callback);
       }
     }
   }

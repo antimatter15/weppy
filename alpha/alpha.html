@@ -1,0 +1,51 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+  <head>
+    <meta charset=utf-8 /> 
+    <title>Weppy Demo</title> 
+    <style>
+      * {
+        font-family: sans-serif, arial, helvetica;
+        font-size: 13px;
+      }
+    </style>
+    <script src="../weppy.js"></script>
+  </head>
+  <body> 
+    <h1>WebP + Alpha Channel via PNG</h1> 
+    
+    <img src="image.webp" data-alpha-src="alpha.png" />
+    <script>
+      WebM.processImages(function(image, canvas){
+        var alpha_path = image.getAttribute('data-alpha-src');
+        if(!alpha_path) return;
+        var alpha = document.createElement('img')
+        alpha.src = alpha_path;
+        alpha.onload = function () {
+          var context = canvas.getContext('2d');
+          context.globalCompositeOperation = 'xor';
+          context.drawImage(alpha, 0, 0, canvas.width, canvas.height);
+        }
+      })
+    </script>
+
+    <h2>Demo Code</h2>
+    <script src="http://gist.github.com/614102.js?file=alphawebp.html"></script>
+    <h2>How does it work?</h2>
+    <a href="http://blog.jackadam.net/2010/alpha-jpegs/">http://blog.jackadam.net/2010/alpha-jpegs/</a><br>
+    <a href="http://antimatter15.github.com/weppy/demo.html">http://antimatter15.github.com/weppy/demo.html</a>
+
+    <h2>Issues</h2>
+    <ul>
+      <li>Chrome (on linux anyway) tends to crash a lot.</li>
+      <li>Firefox throws a security exception when doing <tt>toDataURL()</tt> on a canvas after <tt>drawImage()</tt> of a video loaded from a data url. The hack being used it to replace the image node with the actual canvas instance.</li>
+      <li>Opera doesn't work. I don't really have the time to investigate.</li>
+    </ul>
+    <h2>What Browsers?</h2>
+    Chrome 7.0 and Firefox 4.0 were both tested. Opera doesn't work for reasons that I'm not sure about. I would appreciate it if someone fixes it and submits a patch :)
+
+    <h2>Me</h2>
+    I'm <a href='http://twitter.com/antimatter15'>@antimatter15</a> (please help me get my followed/following ratio over 1.0!). I know practically nothing about video, VP8, Matroska, EBML, WebP, WebM, codecs, binary, compression though all of them fascinate me, and I loved <a href="http://www.xiph.org/video/vid1.shtml">"A Digital Media Primer for Geeks"</a>. At time of writing I'm fifteen, though I don't find that much of an accomplishment. My site is at <a href="http://antimatter15.com">antimatter15.com</a> and hopefully you'll find some other cool stuff there too.
+    
+  </body> 
+</html> 
