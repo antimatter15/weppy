@@ -293,7 +293,7 @@ return generateEBML(EBML);
   Tester.onload = function(){
     if(Tester.width == 4 && Tester.height == 4){
       supportsWebP = 1;
-    }else{
+    }else{ 
       supportsWebP = -1;
     }
   }
