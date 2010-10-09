@@ -20,7 +20,7 @@
   THE SOFTWARE.
 */
 
-var WebM = (function(){
+var WebP = (function(){
   //parse a RIFF encoded media file such as WebP
   function parseRIFF(string){
     var offset = 0;
@@ -283,16 +283,41 @@ return generateEBML(EBML);
   //from http://diveintohtml5.org/everything.html
   function canPlayWebM(){
     var v = document.createElement('video');
-    return !!(v.canPlayType && v.canPlayType('video/webm; codecs="vp8, vorbis"').replace(/no/, ''));
+    return !!(v.canPlayType && v.canPlayType('video/webm; codecs="vp8"').replace(/no/, ''));
   }
+  
+  
+  var supportsWebP = 0; //0 = UNKNOWN. 1 = YAY. -1 = BOO.
 
+  var Tester = new Image();
+  Tester.onload = function(){
+    if(Tester.width == 4 && Tester.height == 4){
+      supportsWebP = 1;
+    }else{
+      supportsWebP = -1;
+    }
+  }
+  
+  Tester.onerror = function(){
+    supportsWebP = -1;
+  }
+  var WebPTest = 'UklGRkYAAABXRUJQVlA4IDoAAABwAgCdASoEAAQAAYcIhYWIhYSIiQIADAzdrBLeABAAAAEAAAEAAPKn5Nn/0v8//Zxn/6H3QAAAAAA=';
+                  //Sample 4x4 black and white WebP image.
+  Tester.src = 'data:image/webp;base64,' + WebPTest;
+  
 
   function renderWebP(url, callback){
+    //TODO: find out if a browser supports WebP. Currently none do, so how does one test this?
+  
     //if it can't play webM what's the point?
-    if(!canPlayWebM()) return callback('http://www.motifake.com/image/demotivational-poster/0902/urine-urine-pee-cheap-demotivational-poster-1234913145.jpg');
+    if(!canPlayWebM()){
+      var img = document.createElement('img'); //maybe i sould be using new Image
+      img.src = 'http://www.motifake.com/image/demotivational-poster/0902/urine-urine-pee-cheap-demotivational-poster-1234913145.jpg';
+      return callback(img);
+    }
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
-    xhr.overrideMimeType('text/plain; charset=x-user-defined');
+    xhr.overrideMimeType('text/plain; charset=x-user-defined'); //binary XHR FTW? Probably XHR2 has binary xhr powers
 
 
     xhr.onload = function(){
@@ -300,26 +325,30 @@ return generateEBML(EBML);
       var webP = parseWebP(parseRIFF(binary));
       
       var video = document.createElement('video');
-      var canvas = document.createElement('canvas');
-      document.body.appendChild(canvas);
-      video.style.display = 'none';
-      document.body.appendChild(video); //probably dont need to do this, but chrome always crashes otherwise
+      //var canvas = document.createElement('canvas');
+      //document.body.appendChild(canvas);
+      //video.style.display = 'none';
+      //document.body.appendChild(video); //probably dont need to do this, but chrome always crashes otherwise
       
-      var context = canvas.getContext('2d');
-      canvas.width = webP.width;
-      canvas.height = webP.height;
+      //var context = canvas.getContext('2d');
+      //canvas.width = webP.width;
+      //canvas.height = webP.height;
+      video.width = webP.width;
+      video.height = webP.height;
 
       var src = toDataURL(toWebM(webP));
 
-      video.addEventListener('progress', function(){
-        context.drawImage(video, 0, 0, webP.width, webP.height);
+      //video.addEventListener('progress', function(){
+        //context.drawImage(video, 0, 0, webP.width, webP.height);
         //callback(canvas.toDataURL('image/png'));
         //firefox throws a security exception :(
-        callback(canvas);
+        //callback(canvas);
         //setTimeout(function(){document.body.removeChild(video)}, 100);
-      }, false);
+      //}, false);
       
       video.src = src;
+      
+      callback(video);
     }
     xhr.send(null);
   }
@@ -339,6 +368,7 @@ return generateEBML(EBML);
   }
 
   function processImages(callback){
+    
     var origin = location.protocol+'//'+location.host;
     for(var i = document.images, l = i.length; l--;){
       if(i[l].src.indexOf(origin) == 0 && /\.webp$/.test(i[l].src)){
@@ -348,9 +378,23 @@ return generateEBML(EBML);
   }
 
 
+
+  if(document && document.addEventListener){
+    for(var scripts = document.getElementsByTagName('script'), l = scripts.length; l--;){
+      if(scripts[l].src.indexOf('weppy.js?auto') != -1){
+        document.addEventListener("DOMContentLoaded", function(){
+          processImages();
+        } ,false);
+        break;
+      }
+    }
+  }
+  
   return {
+    supportsWebP: supportsWebP,
     processImages: processImages,
     renderImage: renderImage,
     renderWebP: renderWebP
   }
+  
 })();
