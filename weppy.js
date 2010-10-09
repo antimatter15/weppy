@@ -328,7 +328,7 @@ var WebP = (function(){
       //var canvas = document.createElement('canvas');
       //document.body.appendChild(canvas);
       //video.style.display = 'none';
-      //document.body.appendChild(video); //probably dont need to do this, but chrome always crashes otherwise
+      document.body.appendChild(video); //probably dont need to do this, but chrome always crashes otherwise
       
       //var context = canvas.getContext('2d');
       //canvas.width = webP.width;
@@ -360,7 +360,10 @@ var WebP = (function(){
       
       if(image.parentNode && result !== false){
         for(var i = 0; i < image.attributes.length; i++){
-          canvas.setAttribute(image.attributes[i].name, image.attributes[i].value)
+          var name = image.attributes[i].name;
+          if(name != 'src'){
+            //canvas.setAttribute(name, image.attributes[i].value)
+          }
         }
         image.parentNode.replaceChild(canvas, image);
       }
@@ -381,7 +384,7 @@ var WebP = (function(){
   if(document && document.addEventListener){
     document.addEventListener("DOMContentLoaded", function(){
       supportsCallback = function(){
-        if(supportsCallback == -1 && WebP.auto == true){ //only do it once youre certain that the browser does not support it
+        if(supportsWebP == -1 && WebP.auto == true){ //only do it once youre certain that the browser does not support it
           //and make sure that auto is still true
           processImages();
         }
