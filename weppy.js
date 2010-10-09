@@ -362,7 +362,7 @@ var WebP = (function(){
         for(var i = 0; i < image.attributes.length; i++){
           var name = image.attributes[i].name;
           if(name != 'src'){
-            //canvas.setAttribute(name, image.attributes[i].value)
+            canvas.setAttribute(name, image.attributes[i].value)
           }
         }
         image.parentNode.replaceChild(canvas, image);
