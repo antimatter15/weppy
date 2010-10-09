@@ -288,7 +288,8 @@ return generateEBML(EBML);
   
   
   var supportsWebP = 0; //0 = UNKNOWN. 1 = YAY. -1 = BOO.
-
+  var supportsCallback = function(){};
+  
   var Tester = new Image();
   Tester.onload = function(){
     if(Tester.width == 4 && Tester.height == 4){
@@ -296,10 +297,12 @@ return generateEBML(EBML);
     }else{ 
       supportsWebP = -1;
     }
+    supportsCallback();
   }
   
   Tester.onerror = function(){
     supportsWebP = -1;
+    supportsCallback();
   }
   var WebPTest = 'UklGRkYAAABXRUJQVlA4IDoAAABwAgCdASoEAAQAAYcIhYWIhYSIiQIADAzdrBLeABAAAAEAAAEAAPKn5Nn/0v8//Zxn/6H3QAAAAAA=';
                   //Sample 4x4 black and white WebP image.
@@ -368,10 +371,9 @@ return generateEBML(EBML);
   }
 
   function processImages(callback){
-    
-    var origin = location.protocol+'//'+location.host;
-    for(var i = document.images, l = i.length; l--;){
-      if(i[l].src.indexOf(origin) == 0 && /\.webp$/.test(i[l].src)){
+    var origin = location.protocol+'//'+location.host; //must check for same origin in order to be xhr'able
+    for(var i = document.images, l = i.length; l--;){ //maybe we could get rid of the check and use CORS
+      if(i[l].src.indexOf(origin) == 0 && /\.webp$/.test(i[l].src)){ //a nicer test would be good, but we dont have other options.
         renderImage(i[l],callback);
       }
     }
@@ -380,19 +382,20 @@ return generateEBML(EBML);
 
 
   if(document && document.addEventListener){
-    for(var scripts = document.getElementsByTagName('script'), l = scripts.length; l--;){
-      if(scripts[l].src.indexOf('weppy.js?auto') != -1){
-        document.addEventListener("DOMContentLoaded", function(){
+    document.addEventListener("DOMContentLoaded", function(){
+      supportsCallback = function(){
+        if(supportsCallback == -1){ //only do it once youre certain that the browser does not support it
           processImages();
-        } ,false);
-        break;
+        }
       }
-    }
+      supportsCallback();
+    } ,false);
   }
   
   return {
-    supportsWebP: supportsWebP,
-    processImages: processImages,
+    supportsWebP: function(){
+      return supportsWebP;
+    },
     renderImage: renderImage,
     renderWebP: renderWebP
   }
