@@ -276,7 +276,7 @@ return generateEBML(EBML);
   }
 
   function toDataURL(webm){
-    return 'data:video/webm,' + escape(webm);
+    return 'data:video/webm,' + escape(webm); 
   }
 
 
