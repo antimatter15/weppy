@@ -293,7 +293,7 @@ return generateEBML(EBML);
 
       var src = toDataURL(toWebM(webP));
 
-      video.addEventListener('progress', function(){
+      video.addEventListener('loadeddata', function(){
         context.drawImage(video, 0, 0, webP.width, webP.height);
         //callback(canvas.toDataURL('image/png'));
         //firefox throws a security exception :(
