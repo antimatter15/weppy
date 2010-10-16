@@ -1,0 +1,79 @@
+<script src="tinybrot.js"></script>
+<script>
+function parseRIFF(string){
+    var offset = 0;
+    var chunks = {};
+    while(offset < string.length){
+      var id = string.substr(offset, 4);
+      var len = parseInt(string.substr(offset+4, 4).split('').map(function(i){
+        var unpadded = i.charCodeAt(0).toString(2);
+        return (new Array(8 - unpadded.length + 1)).join('0') + unpadded
+      }).join(''),2);
+      var data = string.substr(offset + 4 + 4, len);
+      offset += 4 + 4 + len;
+      chunks[id] = chunks[id] || [];
+      if(id == 'RIFF'){
+        chunks[id].push(parseRIFF(data));
+      }else if(id == 'LIST'){
+        chunks[id].push(parseRIFF(data));
+      }else{
+        chunks[id].push(data)
+      }
+      
+    }
+    return chunks
+  }
+
+  //Converting between a string of 0010101001's and binary back and forth is probably inefficient
+  //TODO: get rid of this function
+  function toBinStr(bits){
+    var data = '';
+    var pad = (bits.length % 8) ? (new Array(1 + 8 - (bits.length % 8))).join('0') : '';
+    bits = pad + bits;
+    for(var i = 0; i < bits.length; i+= 8){
+      data += String.fromCharCode(parseInt(bits.substr(i,8),2))
+    }
+    return data;
+  }
+
+
+
+function toBinary(string){
+  return string.split('').map(function(i){
+    var unpadded = i.charCodeAt(0).toString(2);
+    return (new Array(8 - unpadded.length + 1)).join('0') + unpadded;
+  }).join('')
+}
+
+    var VP8 = parseRIFF(webp).RIFF[0].WEBP[0].substr(4);
+    var Source = VP8.split('').map(function(e){
+      return e.charCodeAt(0)
+    });
+    var c = Source;
+    
+    tmp = (c[2] << 16) | (c[1] << 8) | c[0];
+    key_frame = tmp & 0x1;
+    version = (tmp >> 1) & 0x7;
+    show_frame = (tmp >> 4) & 0x1;
+    first_part_size = (tmp >> 5) & 0x7ffff;
+    console.log(key_frame, version, show_frame, first_part_size);
+    if(key_frame == 0){
+      if(Source[3] != 0x9d || Source[4] != 0x01 || Source[5] != 42){ //0x2a == 42 and 42 is betterer
+        console.log('Unexpected Start Code');
+      }
+      var c = Source.slice(6);
+      tmp = (c[1] << 8) | c[0];
+      width = tmp & 0x3fff;
+      horizontal_scale = tmp >> 14;
+      tmp = (c[3] << 8) | c[2];
+      height = tmp & 0x3fff;
+      vertical_scale = tmp >> 14;
+      console.log(width, height);
+    }
+    
+    
+    function bool_decode(arr, prob){  
+      var i = 0, value = 0;
+      //while(++i <= 24) value = (value << 8) | 
+    }
+</script>
