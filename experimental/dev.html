@@ -37,6 +37,52 @@ function parseRIFF(string){
   }
 
 
+    
+    function bool_decode(arr){
+      var i = 0, value = 0, d = 0, range = 255, bit_count = 0;
+      while(++i <= 24) value = (value << 8) | arr[d++];
+      var read_bool = function(prob){
+        var split = 1 + (((range - 1) * prob) >> 8);
+        var SPLIT = split << 8;
+        var retval = 0; //0 or 1
+        if(value >= SPLIT){
+          retval = 1;
+          range -= split;
+          value -= SPLIT;
+        }else{
+          retval = 0;
+          range = split;
+        }
+        while(range < 128){
+          value <<= 1;
+          range <<= 1;
+          if(++bit_count == 8){
+            bit_count = 0;
+            value |= arr[d++];
+          }
+        }
+        return retval;
+      }
+      return {
+        bool: function(prob){
+          return read_bool(prob);
+        },
+        literal: function(num_bits){
+          var v = 0;
+          while(num_bits--) v = (v << 1) + read_bool(128);
+        },
+        l1: function(){
+          return read_bool(128) //shortcut for L(1) = literal 1 bit
+        },
+        signed: function(num_bits){
+          if(!num_bits) return 0;
+          var v = 0;
+          if(read_bool(128)) v = -1;
+          while(--num_bits) v = (v << 1) + read_bool(128);
+          return v
+        }
+      }
+    }
 
 function toBinary(string){
   return string.split('').map(function(i){
@@ -71,9 +117,60 @@ function toBinary(string){
       console.log(width, height);
     }
     
+    var decode = bool_decode(Source.slice(10));
     
-    function bool_decode(arr, prob){  
-      var i = 0, value = 0;
-      //while(++i <= 24) value = (value << 8) | 
+    if(key_frame == 0){
+      color_space = decode.l1();
+      clamping_type = decode.l1();
     }
+    segmentation_enabled = decode.l1();
+    if(segmentation_enabled){
+      //update segmentation, whatever that means
+    }
+    filter_type = decode.l1();
+    loop_filter_level = decode.literal(6);
+    sharpness_level = decode.literal(3);
+    //mb_lf_adjustments() whatever that means
+    log2_nbr_of_dct_partitions = decode.literal(2);
+    //quant_indicies() whatever that means
+    if(key_frame == 0){
+      refresh_entropy_probs = decode.l1();
+    }else{
+      console.log('this should never happen');
+      refresh_golden_frame = decode.l1();
+      refresh_alternate_frame = decode.l1();
+      if(!refresh_golden_frame){
+        copy_buffer_to_golden = decode.literal(2);
+      }
+      if(!refresh_alternate_frame){
+        copy_buffer_to_alternate = decode.literal(2);
+      }
+      sign_bias_golden = decode.l1();
+      sign_bias_alternate = decode.l1();
+      refresh_entropy_probs = decode.l1();
+      refresh_last = decode.l1();
+    }
+    //token_prob_update whatever that is
+    mb_no_coeff_skip = decode.l1();
+    prob_skip_false = decode.literal(8);
+    if(key_frame == 1){ //horrible: 0 = true, 1 = false
+      console.log('this should never happen');
+      prob_intra = decode.literal(8);
+      prob_last = decode.literal(8);
+      prob_golden = decode.literal(8);
+      intra_16x16_prob_update_flag = decode.l1();
+      if(intra_16x16_prob_update_flag){
+        for(var i = 0; i < 4; i++){
+          intra_16x16_prob = decode.literal(8);
+        }
+      }
+      intra_chroma_prob_update_flag = decode.l1();
+      if(intra_chroma_prob_update_flag){
+        for(var i = 0; i < 3 /*yes, i love you too*/; i++){
+          intra_chroma_prob = decode.literal(8);
+        }
+      }
+      //mv_prob_update, whatever that is
+    }
+    
 </script>
