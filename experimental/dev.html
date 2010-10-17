@@ -67,14 +67,12 @@ function parseRIFF(string){
         bool: function(prob){
           return read_bool(prob);
         },
-        literal: function(num_bits){
+        L: function(num_bits){
           var v = 0;
           while(num_bits--) v = (v << 1) + read_bool(128);
+          return v
         },
-        l1: function(){
-          return read_bool(128) //shortcut for L(1) = literal 1 bit
-        },
-        signed: function(num_bits){
+        S: function(num_bits){
           if(!num_bits) return 0;
           var v = 0;
           if(read_bool(128)) v = -1;
@@ -119,58 +117,125 @@ function toBinary(string){
     
     var decode = bool_decode(Source.slice(10));
     
-    if(key_frame == 0){
-      color_space = decode.l1();
-      clamping_type = decode.l1();
+    function mb_lf_adjustments(){
+      loop_filter_adj_enable = decode.L(1);
+      if(loop_filter_adj_enable){
+        console.log('loop filter adj enable');
+        console.log('oh noes this is not planned');
+        //probably wont happen because it indicates
+        //MB-level (assume it means macroblock?) loop filter adjustment based on refrence frame and coding mode
+      }
     }
-    segmentation_enabled = decode.l1();
+    
+    function quant_indices(){
+      y_ac_qi = decode.L(7)
+      y_dc_delta_present = decode.L(1)
+      
+      if (y_dc_delta_present) {
+        y_dc_delta_magnitude = decode.L(4)
+        y_dc_delta_sign = decode.L(1)
+      }
+      
+      y2_dc_delta_present = decode.L(1);
+      if (y2_dc_delta_present) {
+        y2_dc_delta_magnitude = decode.L(4)
+        y2_dc_delta_sign = decode.L(1)
+      }
+      
+      y2_ac_delta_present = decode.L(1);
+      if (y2_ac_delta_present) {
+        y2_ac_delta_magnitude = decode.L(4)
+        y2_ac_delta_sign = decode.L(1)
+      }
+      
+      uv_dc_delta_present = decode.L(1);
+      if (uv_dc_delta_present) {
+        uv_dc_delta_magnitude = decode.L(4)
+        uv_dc_delta_sign = decode.L(1)
+      }
+      
+      uv_ac_delta_present = decode.L(1);
+      if (uv_ac_delta_present) {
+        uv_ac_delta_magnitude = decode.L(4)
+        uv_ac_delta_sign = decode.L(1)
+      }
+      
+    }
+    
+    function token_prob_update(){
+      for (var i = 0; i < 4; i++) {
+        for (var j = 0; j < 8; j++) {
+          for (var k = 0; k < 3; k++) {
+            for (var l = 0; l < 11; l++) {
+              coeff_prob_update_flag = decode.L(1)
+              if (coeff_prob_update_flag) {
+                coeff_prob = decode.L(8)
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    function mv_prob_update(){
+      console.log('this should never happen anyway so why bother implementing it');
+    }
+    
+    if(key_frame == 0){
+      color_space = decode.L(1);
+      if(color_space != 0) console.log('unsupported non-YCbCr color space');
+      clamping_type = decode.L(1);
+    }
+    segmentation_enabled = decode.L(1);
     if(segmentation_enabled){
       //update segmentation, whatever that means
+      console.log('meh im too lazy to implement naw');
     }
-    filter_type = decode.l1();
-    loop_filter_level = decode.literal(6);
-    sharpness_level = decode.literal(3);
-    //mb_lf_adjustments() whatever that means
-    log2_nbr_of_dct_partitions = decode.literal(2);
-    //quant_indicies() whatever that means
+    filter_type = decode.L(1);
+    loop_filter_level = decode.L(6);
+    sharpness_level = decode.L(3);
+    mb_lf_adjustments();
+    
+    log2_nbr_of_dct_partitions = decode.L(2);
+    quant_indices();
     if(key_frame == 0){
-      refresh_entropy_probs = decode.l1();
+      refresh_entropy_probs = decode.L(1);
     }else{
       console.log('this should never happen');
-      refresh_golden_frame = decode.l1();
-      refresh_alternate_frame = decode.l1();
+      refresh_golden_frame = decode.L(1);
+      refresh_alternate_frame = decode.L(1);
       if(!refresh_golden_frame){
-        copy_buffer_to_golden = decode.literal(2);
+        copy_buffer_to_golden = decode.L(2);
       }
       if(!refresh_alternate_frame){
-        copy_buffer_to_alternate = decode.literal(2);
+        copy_buffer_to_alternate = decode.L(2);
       }
-      sign_bias_golden = decode.l1();
-      sign_bias_alternate = decode.l1();
-      refresh_entropy_probs = decode.l1();
-      refresh_last = decode.l1();
+      sign_bias_golden = decode.L(1);
+      sign_bias_alternate = decode.L(1);
+      refresh_entropy_probs = decode.L(1);
+      refresh_last = decode.L(1);
     }
-    //token_prob_update whatever that is
-    mb_no_coeff_skip = decode.l1();
-    prob_skip_false = decode.literal(8);
+    token_prob_update()
+    mb_no_coeff_skip = decode.L(1);
+    prob_skip_false = decode.L(8);
     if(key_frame == 1){ //horrible: 0 = true, 1 = false
       console.log('this should never happen');
-      prob_intra = decode.literal(8);
-      prob_last = decode.literal(8);
-      prob_golden = decode.literal(8);
-      intra_16x16_prob_update_flag = decode.l1();
+      prob_intra = decode.L(8);
+      prob_last = decode.L(8);
+      prob_golden = decode.L(8);
+      intra_16x16_prob_update_flag = decode.L(1);
       if(intra_16x16_prob_update_flag){
         for(var i = 0; i < 4; i++){
-          intra_16x16_prob = decode.literal(8);
+          intra_16x16_prob = decode.L(8);
         }
       }
-      intra_chroma_prob_update_flag = decode.l1();
+      intra_chroma_prob_update_flag = decode.L(1);
       if(intra_chroma_prob_update_flag){
         for(var i = 0; i < 3 /*yes, i love you too*/; i++){
-          intra_chroma_prob = decode.literal(8);
+          intra_chroma_prob = decode.L(8);
         }
       }
-      //mv_prob_update, whatever that is
+      mv_prob_update()
     }
     
 </script>
