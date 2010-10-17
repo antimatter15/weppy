@@ -1,5 +1,22 @@
 <script src="tinybrot.js"></script>
+<!-- RIP Benoit Mandelbrot. -->
 <script>
+/*
+  About: This file.
+  
+  This is a prototype. Hacking together pieces to get it to work as quickly as possible
+  (as what I did with ebml the first time). Please don't judge based on this file.
+  Well, you're judging anyway. So probably you shouldn't read this unless you somehow 
+  manage to plow through the bad code and fix it.
+  
+  BTW, actually, it would be pretty cool to have a working VP8 video decoder in canvas
+  and javascript. That would be freaking awesome. But for certain, I'm not going to and
+  if someone else tries, it would be cool if they find out that it's pretty easy because
+  I laid the groundwork. But of course, that's not gonna happen, interframe prediction
+  is pretty much the biggest thing, isn't it?
+  
+  Why am I writing this? No idea.
+*/
 function parseRIFF(string){
     var offset = 0;
     var chunks = {};
