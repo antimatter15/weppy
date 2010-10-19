@@ -17,6 +17,9 @@
   
   Why am I writing this? No idea.
 */
+
+atob("UklGRkYAAABXRUJQVlA4IDoAAABwAgCdASoEAAQAAYcIhYWIhYSIiQIADAzdrBLeABAAAAEAAAEAAPKn5Nn/0v8//Zxn/6H3QAAAAAA=");
+
 function parseRIFF(string){
     var offset = 0;
     var chunks = {};
@@ -78,6 +81,7 @@ function parseRIFF(string){
             value |= arr[d++];
           }
         }
+        console.log(retval);
         return retval;
       }
       return {
@@ -105,8 +109,14 @@ function toBinary(string){
     return (new Array(8 - unpadded.length + 1)).join('0') + unpadded;
   }).join('')
 }
-
+    var graysquare = 'UklGRjYAAABXRUJQVlA4ICoAAAAwAgCdASogACAAC8cIhYWIhYSIv4IAB5FMByADAAABAAABAAD+q8AAAAA=';
+    var blacksquare = 'UklGRjgAAABXRUJQVlA4ICwAAAAwAgCdASogACAAC8cIhYWIhYSIv4IAB5DzycAEAAABAAABAAD+5rUAAAAA';
+    var circles = 'UklGRkIAAABXRUJQVlA4IDYAAABwAgCdASogACAABQcIhYWIhYSIm4IDO7Rve2Q4AAgAAAUAAAEAAP7fbRm0jZp4TUpRkcAAAA==';
+    var circles2 = 'UklGRmIAAABXRUJQVlA4IFYAAACQAwCdASogACAAA8cIhYWIhYSIlIICzgRu1v4CtG26wyquZ2PKMBYAAA4AAAEAAP7K2N2EaD+dq2PkwemM96efe5fgQAAIC2qanJPPO24B+EOakAAA';
+    
+    webp = atob(circles);
     var VP8 = parseRIFF(webp).RIFF[0].WEBP[0].substr(4);
+    
     var Source = VP8.split('').map(function(e){
       return e.charCodeAt(0)
     });
@@ -117,7 +127,7 @@ function toBinary(string){
     version = (tmp >> 1) & 0x7;
     show_frame = (tmp >> 4) & 0x1;
     first_part_size = (tmp >> 5) & 0x7ffff;
-    console.log(key_frame, version, show_frame, first_part_size);
+    console.log(key_frame?'interframe':'keyframe', 'v' + version, show_frame?'show':'no-show', 'size', first_part_size);
     if(key_frame == 0){
       if(Source[3] != 0x9d || Source[4] != 0x01 || Source[5] != 42){ //0x2a == 42 and 42 is betterer
         console.log('Unexpected Start Code');
@@ -129,10 +139,10 @@ function toBinary(string){
       tmp = (c[3] << 8) | c[2];
       height = tmp & 0x3fff;
       vertical_scale = tmp >> 14;
-      console.log(width, height);
+      console.log('size', width, height);
     }
     
-    var decode = bool_decode(Source.slice(10));
+    var decode = bool_decode(Source.slice(6+4));
     
     function mb_lf_adjustments(){
       loop_filter_adj_enable = decode.L(1);
@@ -219,47 +229,53 @@ function toBinary(string){
       refresh_entropy_probs = decode.L(1);
     }else{
       console.log('this should never happen');
-      refresh_golden_frame = decode.L(1);
-      refresh_alternate_frame = decode.L(1);
-      if(!refresh_golden_frame){
-        copy_buffer_to_golden = decode.L(2);
-      }
-      if(!refresh_alternate_frame){
-        copy_buffer_to_alternate = decode.L(2);
-      }
-      sign_bias_golden = decode.L(1);
-      sign_bias_alternate = decode.L(1);
-      refresh_entropy_probs = decode.L(1);
-      refresh_last = decode.L(1);
     }
-    token_prob_update()
+    //token_prob_update()
     mb_no_coeff_skip = decode.L(1);
     prob_skip_false = decode.L(8);
     if(key_frame == 1){ //horrible: 0 = true, 1 = false
       console.log('this should never happen');
-      prob_intra = decode.L(8);
-      prob_last = decode.L(8);
-      prob_golden = decode.L(8);
-      intra_16x16_prob_update_flag = decode.L(1);
-      if(intra_16x16_prob_update_flag){
-        for(var i = 0; i < 4; i++){
-          intra_16x16_prob = decode.L(8);
-        }
-      }
-      intra_chroma_prob_update_flag = decode.L(1);
-      if(intra_chroma_prob_update_flag){
-        for(var i = 0; i < 3 /*yes, i love you too*/; i++){
-          intra_chroma_prob = decode.L(8);
-        }
-      }
-      mv_prob_update()
     }
     
     
+    
+    mb_skip_coeff = +(mb_no_coeff_skip && decode.L(1));
+    
+    console.log('mb skip coefficient', mb_skip_coeff);
+
+    is_inter_mb = 0;
+    
+    function residual_block(){
+      var firstCoeff = 0;  //• firstCoeff is 1 for luma blocks of macroblocks containing Y2 subblock, otherwise 0
+      for(var i = firstCoeff; i < 16; i++){
+        var token = [];
+        tree_read(decode, token, []);
+        //if(token == EOB) break;
+        //if(token_has_extra_bits){
+          //extra_bits = L(n);
+          
+        //}
+        var sign = decode.L(1);
+        console.log(token, sign);
+      }
+    }
+    
+    if(!mb_skip_coeff){
+      for(var i = 0; i < 24; i++){
+        //residual_block(); // 16Y 4U 4V
+        //console.log(decode.L(1));
+      }
+    }
+
     function tree_read(decoder, t, p){
       var i = 0;
       while((i = t[i + decoder.bool(p[i>>1])]) > 0) {};
       return -i;
     }
+
+    var kf_ymode_prob = [145, 156, 163, 128];
+    var kf_ymode_tree = [];
+    Ymode = tree_read(decode, kf_ymode_tree, kf_ymode_prob);
+    
     
 </script>
