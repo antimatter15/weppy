@@ -1,5 +1,6 @@
 <script src="tinybrot.js"></script>
 <!-- RIP Benoit Mandelbrot. -->
+<script src="const.js"></script>
 <script>
 /*
   About: This file.
@@ -60,7 +61,7 @@ function parseRIFF(string){
     
     function bool_decode(arr){
       var i = 0, value = 0, d = 0, range = 255, bit_count = 0;
-      while(++i <= 24) value = (value << 8) | arr[d++];
+      //while(++i <= 24){ value = (value << 8) | arr[d++]; console.log(value)}
       var read_bool = function(prob){
         var split = 1 + (((range - 1) * prob) >> 8);
         var SPLIT = split << 8;
@@ -81,7 +82,7 @@ function parseRIFF(string){
             value |= arr[d++];
           }
         }
-        console.log(retval);
+        console.log(retval, d, arr.length, prob);
         return retval;
       }
       return {
@@ -151,6 +152,8 @@ function toBinary(string){
         console.log('oh noes this is not planned');
         //probably wont happen because it indicates
         //MB-level (assume it means macroblock?) loop filter adjustment based on refrence frame and coding mode
+      }else{
+        console.log('no mb lf');
       }
     }
     
@@ -159,49 +162,75 @@ function toBinary(string){
       y_dc_delta_present = decode.L(1)
       
       if (y_dc_delta_present) {
+        console.log('y dc');
         y_dc_delta_magnitude = decode.L(4)
         y_dc_delta_sign = decode.L(1)
       }
       
       y2_dc_delta_present = decode.L(1);
       if (y2_dc_delta_present) {
+        console.log('y2 dc');
         y2_dc_delta_magnitude = decode.L(4)
         y2_dc_delta_sign = decode.L(1)
       }
       
       y2_ac_delta_present = decode.L(1);
       if (y2_ac_delta_present) {
+        console.log('y2 ac');
         y2_ac_delta_magnitude = decode.L(4)
         y2_ac_delta_sign = decode.L(1)
       }
       
       uv_dc_delta_present = decode.L(1);
       if (uv_dc_delta_present) {
+        console.log('uv dc');
         uv_dc_delta_magnitude = decode.L(4)
         uv_dc_delta_sign = decode.L(1)
       }
       
       uv_ac_delta_present = decode.L(1);
       if (uv_ac_delta_present) {
+        console.log('uv ac')
         uv_ac_delta_magnitude = decode.L(4)
         uv_ac_delta_sign = decode.L(1)
       }
       
     }
     
+    var num_dct_tokens = 12; //what?!?!?
+    
+    var coef_probs = default_coef_probs;
+    
     function token_prob_update(){
+      var i = 0; do {
+        var j = 0; do {
+          var k = 0; do {
+            var t = 0; do {
+              if(decode.bool(coef_update_probs[i][j][k][t])){
+                console.log('UPDAAATTTEEE');
+                coef_probs[i][j][k][t] = decode.L(8);
+              }
+            } while(++t < num_dct_tokens -1)
+          }while(++k < 3);
+        } while( ++ j < 8);
+      } while( ++i < 4);
+      /*
       for (var i = 0; i < 4; i++) {
         for (var j = 0; j < 8; j++) {
           for (var k = 0; k < 3; k++) {
             for (var l = 0; l < 11; l++) {
               coeff_prob_update_flag = decode.L(1)
               if (coeff_prob_update_flag) {
+                console.log('coeff update flag');
                 coeff_prob = decode.L(8)
+                console.log('probability coefficient', coeff_prob);
+              }else{
+                console.log('no coeff update flag');
               }
             }
           }
         }
-      }
+      }*/
     }
     
     function mv_prob_update(){
@@ -211,26 +240,39 @@ function toBinary(string){
     if(key_frame == 0){
       color_space = decode.L(1);
       if(color_space != 0) console.log('unsupported non-YCbCr color space');
+      console.log('color space', color_space?'unsuppported': 'YCrCb ITU-R BT.601');
       clamping_type = decode.L(1);
+      console.log('clamping type', clamping_type?'guaranteed to be within threshold':'decoder must clamp');
     }
     segmentation_enabled = decode.L(1);
+    console.log('segmentation mode', segmentation_enabled);
     if(segmentation_enabled){
       //update segmentation, whatever that means
       console.log('meh im too lazy to implement naw');
     }
     filter_type = decode.L(1);
+    console.log('filter type', filter_type?'use macroblock loop filter':'do not use macroblock loop filter');
     loop_filter_level = decode.L(6);
+    console.log('loop filter level', loop_filter_level);
     sharpness_level = decode.L(3);
+    console.log('sharpness level', sharpness_level);
     mb_lf_adjustments();
     
     log2_nbr_of_dct_partitions = decode.L(2);
+    console.log('log2 number of dct partitions', log2_nbr_of_dct_partitions);
+    
     quant_indices();
     if(key_frame == 0){
       refresh_entropy_probs = decode.L(1);
+      if(refresh_entropy_probs){
+        console.log('refreshing entropy probabilities');
+      }else{
+        console.log('no entropy refrsh');
+      }
     }else{
       console.log('this should never happen');
     }
-    //token_prob_update()
+    token_prob_update()
     mb_no_coeff_skip = decode.L(1);
     prob_skip_false = decode.L(8);
     if(key_frame == 1){ //horrible: 0 = true, 1 = false
