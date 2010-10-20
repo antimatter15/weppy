@@ -275,16 +275,22 @@ function toBinary(string){
     token_prob_update()
     mb_no_coeff_skip = decode.L(1);
     prob_skip_false = decode.L(8);
+    console.log('prob_skip_false', prob_skip_false);
+    
     if(key_frame == 1){ //horrible: 0 = true, 1 = false
       console.log('this should never happen');
     }
     
-    
-    
-    mb_skip_coeff = +(mb_no_coeff_skip && decode.L(1));
-    
-    console.log('mb skip coefficient', mb_skip_coeff);
 
+    
+    if(mb_no_coeff_skip == 1){
+      mb_coeff_skip = decode.bool(prob_skip_false);
+      console.log('special mb skip coeff', mb_coeff_skip)
+    }else{
+      mb_coeff_skip = 0;
+      console.log('default mb skip coeff', mb_coeff_skip)
+    }
+    
     is_inter_mb = 0;
     
     function residual_block(){
@@ -301,14 +307,14 @@ function toBinary(string){
         console.log(token, sign);
       }
     }
-    
-    if(!mb_skip_coeff){
+    //*
+    if(!mb_coeff_skip){
       for(var i = 0; i < 24; i++){
         //residual_block(); // 16Y 4U 4V
         //console.log(decode.L(1));
       }
     }
-
+    //*/
     function tree_read(decoder, t, p){
       var i = 0;
       while((i = t[i + decoder.bool(p[i>>1])]) > 0) {};
@@ -320,4 +326,77 @@ function toBinary(string){
     Ymode = tree_read(decode, kf_ymode_tree, kf_ymode_prob);
     
     
+    
+    //I'm porting verbatim from the vp8 bitstream spec
+    //though you can pretend that i'm actually following
+    //the awesome rules of Enterprise Javascript http://enterprise-js.com/6
+    //but really, i'm just porting this stuff.
+    //optimization later. if ever.
+    
+    var coef_bands = [0, 1, 2, 3, 6, 4, 5, 6, 6, 6, 6, 6, 6, 6, 6, 7]; //todo: move over to const.js
+    
+    var block = [];
+    var firstCoeff = 0;
+    var plane;
+    var ctx2;
+    var ctx3 = 0;
+    var probTable;
+    var token;
+    var sign;
+    var absValue;
+    var extraBits;
+    var prevCoeffWasZero = false;
+    var currentBlockHasCoeffs = false;
+    
+    var categoryBase = [5, 7, 11, 19, 35, 67];
+    if(current_block_is_y2_block){
+     plane = 0;
+    }else if(current_block_is_chroma){
+      plane = 2;
+    }else if(current_macroblock_has_y2){
+      plane = 1;
+    }else{
+      plane = 3
+    }
+    
+    if(plane == 1) firstCoeff++;
+    
+    if(left_neighbor_block_has_coeff(plane)){
+      ctx3++;
+    }
+    if(above_negihbor_block_has_coefficients(plane)){
+      ctx3++;
+    }
+    for(var i = firstCoeff; i < 16; ++i){
+      ctx2 = coef_bands[i];
+      probTable = coef_prbs[plane][ctx2][ctx3];
+      
+      if(prevCoeffWasZero){
+        token = tree_read(decode, **coef_tree_without_eob**, probTable);
+      }else{
+        token = tree_read(decode, coef_tree, probTable);
+      }
+      if(token == dct_eob){
+        break;
+      }
+      if(token != DCT_0){
+        currentBlockHasCoeffs = true;
+        if(**token_has_extra_bits(token)**){
+          extraBits = DCTextra(token);
+          absValue = categoryBase[asdfkjasdf]+extraBits
+        }else{
+          absValue = **tokenToAbsValue(token)**
+        }
+        sign = decode.L(1);
+        block[i] = sign? -absValue : absValue;
+      }else{
+        absValue = 0;
+      }
+      if(absValue == 0) ctx3 = 0;
+      else if(absValue == 1) ctx3 = 1;
+      else ctx3 = 2;
+      prevCoeffWasZero = true;
+    }
+    **block_has_coefficients[currentMb][currentBlock]** = currentBlockHasCoeffs;
+
 </script>
