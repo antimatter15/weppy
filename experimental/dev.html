@@ -326,6 +326,36 @@ function toBinary(string){
     Ymode = tree_read(decode, kf_ymode_tree, kf_ymode_prob);
     
     
+    //seriously, what the heck? i have no idea what this means.
+    var DCT_0 = 0, 
+        DCT_1 = 1, 
+        DCT_2 = 2,
+        DCT_3 = 3,
+        DCT_4 = 4,
+        dct_cat1 = 5,
+        dct_cat2 = 6,
+        dct_cat3 = 7,
+        dct_cat4 = 8,
+        dct_cat5 = 9,
+        dct_cat6 = 10,
+        dct_eob = 11,
+        num_dct_tokens = 12;
+        
+    var coef_tree = [
+      -dct_eob, 2,
+      -DCT_0, 4,
+      -DCT_1, 6,
+      8, 12,
+      -DCT_2, 10,
+      -DCT_3, -DCT_4,
+      14, 16,
+      -dct_cat1, -dct_cat2, 
+      18, 20,
+      -dct_cat3, -dct_cat4, 
+      -dct_cat5, -dct_cat6
+    ];
+
+    
     
     //I'm porting verbatim from the vp8 bitstream spec
     //though you can pretend that i'm actually following
