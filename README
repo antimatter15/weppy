@@ -8,3 +8,12 @@ WebP is actually a lightweight container for a single VP8 frame (whereas WebM is
 === What Browsers? ===
 
 Chrome 7.0, Opera 10.62, and Firefox 4.0 were tested and functional. It should work in all browsers that support WebM video.
+
+
+=== Experimental ===
+
+There's a folder named "experimental" where some cool experimenting is going on. The aim is to have a real, functioning, pure-javascript (no webm/video dependencies) implementation of the intraframe compression features of vp8, enabling stable, practical use of WebP in most existing browsers, including (theoretically) Firefox 3+, Safari 3.2+, Chrome 4.0+, Opera 10+, and IE9+.
+
+It's much more complex than converting to WebM, but should be less prone to crashing (as the canvas apis are old and well tested, well defined, and mature - compared to video support). 
+
+The current state of the experimental branch is far from complete (and may forever remain as such). Right now, it is capable of parsing the entire uncompressed frame header, implements the boolean entropy decoder, and reads the rest of the (keyframe) compressed header. What remains is parsing out the macroblocks, dequantization, inverse discrete cosine transform, color conversion, deblocking and all the other big words and concepts I don't understand.
