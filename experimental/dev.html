@@ -321,8 +321,17 @@ function toBinary(string){
       return -i;
     }
 
+    var DC_PRED = 0,
+        V_PRED = 1,
+        H_PRED = 2,
+        TM_PRED = 3,
+        B_PRED = 4,
+        num_uv_modes = B_PRED,
+        num_ymodes = 5; //or is it six?
+
+
     var kf_ymode_prob = [145, 156, 163, 128];
-    var kf_ymode_tree = [];
+    var kf_ymode_tree = [-B_PRED, 2, 4, 6, -DC_PRED, -V_PRED, -H_PRED, -TM_PRED];
     Ymode = tree_read(decode, kf_ymode_tree, kf_ymode_prob);
     
     
