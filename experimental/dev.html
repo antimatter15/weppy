@@ -335,6 +335,47 @@ function toBinary(string){
     Ymode = tree_read(decode, kf_ymode_tree, kf_ymode_prob);
     
     
+    if(Ymode != B_PRED){
+      console.log('non b-pred macroblock modes are not supported.');
+      
+    }
+    
+    if(Ymode == B_PRED){
+      console.log('yay bpred');
+      var B_DC_PRED = 0,
+          B_TM_PRED = 1,
+          B_VE_PRED = 2,
+          B_HE_PRED = 3,
+          
+          B_LD_PRED = 4
+          B_RD_PRED = 5,
+          B_VR_PRED = 6, 
+          B_VL_PRED = 7, 
+          B_HD_PRED = 8, 
+          B_HU_PRED = 9,
+          num_intra_bmodes = 10;
+      
+      var bmode_tree = [
+        -B_DC_PRED, 2,
+        /* B_DC_PRED = "0" */
+        -B_TM_PRED, 4,
+        /* B_TM_PRED = "10" */
+        -B_VE_PRED, 6,
+        /* B_VE_PRED = "110" */
+        8, 12,
+        -B_HE_PRED, 10,
+        /* B_HE_PRED = "1110" */
+        -B_RD_PRED, -B_VR_PRED,
+        /* B_RD_PRED = "111100", B_VR_PRED = "111101" */
+        -B_LD_PRED, 14,
+        /* B_LD_PRED = "111110" */
+        -B_VL_PRED, 16
+        /* B_VL_PRED = "1111110" */
+        -B_HD_PRED, -B_HU_PRED
+      ];
+
+    }
+    
     //seriously, what the heck? i have no idea what this means.
     var DCT_0 = 0, 
         DCT_1 = 1, 
