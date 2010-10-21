@@ -293,6 +293,7 @@ function toBinary(string){
     
     is_inter_mb = 0;
     
+    /*
     function residual_block(){
       var firstCoeff = 0;  //• firstCoeff is 1 for luma blocks of macroblocks containing Y2 subblock, otherwise 0
       for(var i = firstCoeff; i < 16; i++){
@@ -307,7 +308,6 @@ function toBinary(string){
         console.log(token, sign);
       }
     }
-    //*
     if(!mb_coeff_skip){
       for(var i = 0; i < 24; i++){
         //residual_block(); // 16Y 4U 4V
@@ -373,7 +373,19 @@ function toBinary(string){
         /* B_VL_PRED = "1111110" */
         -B_HD_PRED, -B_HU_PRED
       ];
-
+      /*
+      The adjacent subblocks need not lie in the current macroblock. The subblocks to the left of the left-
+      edge subblocks 0, 4, 8, and 12 are the right-edge subblocks 3, 7, 11, and 15, respectively, of the
+      (already coded) macroblock immediately to the left. Similarly, the subblocks above the top-edge
+      subblocks 0, 1, 2, and 3 are the bottom-edge subblocks 12, 13, 14, and 15 of the already-coded
+      macroblock immediately above us.
+      */
+      //A is the BMODE of the ABOVE subblock (which may be on another macroblock)
+      //L is the BMODE of the LEFT subblock (which may be on another macroblock)
+      var A = 0, L = 0;
+      Bmode = tree_read(decode, bmode_tree, kf_bmode_prob[A][L]);
+      
+      
     }
     
     //seriously, what the heck? i have no idea what this means.
