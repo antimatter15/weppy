@@ -385,6 +385,10 @@ function toBinary(string){
       var A = 0, L = 0;
       Bmode = tree_read(decode, bmode_tree, kf_bmode_prob[A][L]);
       
+      var uv_mode_tree = [-DC_PRED, 2, -V_PRED, 4, -H_PRED, -TM_PRED];
+      var kf_uv_mode_prob = [142, 114, 183];
+      uv_mode = tree_read(decode, uv_mode_tree, kf_uv_mode_prob);
+      
       
     }
     
