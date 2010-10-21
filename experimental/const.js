@@ -309,7 +309,7 @@ var default_coef_probs = /*[NUM_TYPES][NUM_BANDS][NUM_CTX][NUM_PROBAS] */ [
 ];
 
 
-kf_bmode_prob = /*static const uint8_t kBModesProba[NUM_BMODES][NUM_BMODES][NUM_BMODES - 1]*/ = [
+kf_bmode_prob = [
   // genereated using vp8_kf_default_bmode_probs()
   [ [ 231, 120, 48, 89, 115, 113, 120, 152, 112 ],
     [ 152, 179, 64, 126, 170, 118, 46, 70, 95 ],

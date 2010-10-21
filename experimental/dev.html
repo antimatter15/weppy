@@ -389,6 +389,11 @@ function toBinary(string){
       var kf_uv_mode_prob = [142, 114, 183];
       uv_mode = tree_read(decode, uv_mode_tree, kf_uv_mode_prob);
       
+      if(uv_mode == V_PRED) console.log('VERTICAL CHROMA PREDICTION');
+      if(uv_mode == H_PRED) console.log('HORIZONTAL CHROMA PREDICTION');
+      if(uv_mode == DC_PRED) console.log('DC PREDICTION');
+      if(uv_mode == TM_PRED) console.log('TRUE MOTION PREDICTION');
+      
       
     }
     
