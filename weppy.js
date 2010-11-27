@@ -309,12 +309,7 @@ var WebP = (function(){
   function renderWebP(url, callback){
     //TODO: find out if a browser supports WebP. Currently none do, so how does one test this?
   
-    //if it can't play webM what's the point?
-    if(!canPlayWebM()){
-      var img = document.createElement('img'); //maybe i sould be using new Image
-      img.src = 'http://www.motifake.com/image/demotivational-poster/0902/urine-urine-pee-cheap-demotivational-poster-1234913145.jpg';
-      return callback(img);
-    }
+
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.overrideMimeType('text/plain; charset=x-user-defined'); //binary XHR FTW? Probably XHR2 has binary xhr powers
@@ -353,6 +348,19 @@ var WebP = (function(){
     xhr.send(null);
   }
 
+  function checkWebM(){
+    if(!canPlayWebM()){ //if it can't play webM what's the point?
+      var origin = location.protocol+'//'+location.host; //must check for same origin in order to be xhr'able
+      for(var i = document.images, l = i.length; l--;){ //maybe we could get rid of the check and use CORS
+        if(i[l].src.indexOf(origin) == 0 && /\.webp$/.test(i[l].src)){ //a nicer test would be good, but we dont have other options.
+          i[l].src = 'http://www.motifake.com/image/demotivational-poster/0902/urine-urine-pee-cheap-demotivational-poster-1234913145.jpg'
+        }
+      }
+      return false
+    }
+    return true
+  }
+
   function renderImage(image, callback){
     renderWebP(image.src, function(canvas){
       var result = null;
@@ -373,6 +381,8 @@ var WebP = (function(){
   function processImages(callback){
     var origin = location.protocol+'//'+location.host; //must check for same origin in order to be xhr'able
     for(var i = document.images, l = i.length; l--;){ //maybe we could get rid of the check and use CORS
+      //if it can't play webM what's the point?
+
       if(i[l].src.indexOf(origin) == 0 && /\.webp$/.test(i[l].src)){ //a nicer test would be good, but we dont have other options.
         renderImage(i[l],callback);
       }
@@ -386,7 +396,9 @@ var WebP = (function(){
       supportsCallback = function(){
         if(supportsWebP == -1 && WebP.auto == true){ //only do it once youre certain that the browser does not support it
           //and make sure that auto is still true
-          processImages();
+          if(checkWebM()){
+            processImages();
+          }
         }
       }
       supportsCallback();
@@ -398,6 +410,7 @@ var WebP = (function(){
       return supportsWebP;
     },
     auto: true,
+    processImages: processImages,
     renderImage: renderImage,
     renderWebP: renderWebP
   }
